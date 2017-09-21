@@ -50,7 +50,8 @@ app.post('/signup', requestHandler.addUser);
 
 app.post('/signin', requestHandler.getUser);
 app.get('/signin', function(req, res) {
-  res.render('/');
+  console.log('adsfadfadsf')
+  return res.redirect("/");
 });
 
 app.post('/create', util.checkUser, requestHandler.addEvent);
