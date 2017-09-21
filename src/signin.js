@@ -1,5 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+//import styles from './Sign.css';
+
 var axios = require('axios');
 
 class SignIn extends React.Component {
@@ -35,12 +37,17 @@ class SignIn extends React.Component {
 	render(){
 		return (
 			<div>
+				<div className="container">
 				<form onSubmit={this.handleSubmit}>
-					<input onChange={this.handleUserInput} type="text" placeholder="Username" />
-					<input onChange={this.handlePasswordInput} type="text" placeholder="Password" />
-					<input type="submit" value="Sign In"/>
+					<div className = "form-input">
+					<input onChange={this.handleUserInput} type="text"name ="username" placeholder="Username" />
+					<input onChange={this.handlePasswordInput} type="password" name = "password" placeholder="Password" />
+					</div>
+					<input type="submit" value="Sigin" name="submit" value="Sign In"/>
 				</form>
 				<button>Sign Up</button>
+				<button>Forget Password?</button>
+				</div>
 			</div>
 		)
 	}
