@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Home from './home';
 import Signin from './signin';
-//import style from './Sign.css';
 require('./style/Sign.css');
 
 
@@ -24,7 +23,7 @@ class App extends React.Component {
 
 document.addEventListener('DOMContentLoaded', function() {
   ReactDOM.render(
-    <Signin />,
+    <Home />,
     document.getElementById('mount')
   );
 });
