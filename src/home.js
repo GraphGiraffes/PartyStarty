@@ -15,6 +15,11 @@ class Home extends React.Component {
 			// events: [],
 			// currentEvent: events[0]
 		}
+		this.handleSignUpClick = this.handleSignUpClick.bind(this);
+		this.handleCreateClick = this.handleCreateClick.bind(this);
+		this.handleSignInClick = this.handleSignInClick.bind(this);
+		this.handleLogoutClick = this.handleLogoutClick.bind(this);
+		this.Log = this.Log.bind(this);
 	}
 	render(){
 		return (
@@ -45,30 +50,65 @@ export default Home;
 		// })
 	// }
 	// <Event event={this.state.currentEvent}/>
-	// handleSignUpClick(){
-	// 	axios.get('/signup')
-	// 	.then(data => {
-	// 	})
-	// 	.catch(error => {
-	// 		console.log(error);
-	// 	})
-	// }
-	// handleSignInClick(){
-	// 	axios.get('/create')
-	// 	.then(data => {
-	// 	})
-	// 	.catch(error => {
-	// 		console.log(error);
-	// 	})
-	// }
-	// handleCreateClick(){
-	// 	axios.get('/create')
-	// 	.then(data => {
-	// 	})
-	// 	.catch(error => {
-	// 		console.log(error);
-	// 	})
-	// }
+	handleSignUpClick(){
+		axios.get('/signup')
+		.then(data => {
+		})
+		.catch(error => {
+			console.log(error);
+		})
+	}
+	handleSignInClick(e){
+		e.preventDefault()
+		axios.get('/signin')
+		.then(data => {
+			console.log('redirect to "signup" page successfully',data)
+		})
+		.catch(error => {
+			console.log(error);
+		})
+	}
+	handleCreateClick(){
+		axios.get('/create')
+		.then(data => {
+			console.log('redirect to "create" page successfully')
+		})
+		.catch(error => {
+			console.log(error);
+		})
+	}
+	handleLogoutClick(){
+		axios.get('/signin')
+		.then(data => {
+			console.log('redirect to "signin" page successfully ')
+		})
+		.catch(error => {
+			console.log(error);
+		})
+	}
+    Log() {
+		console.log('It is')
+	}
+	render(){
+		return (
+			<div>
+				<div>
+				"Hey it's the home screen yall"
+				<button onClick = {this.handleSignInClick}>Sign In</button>
+				<br></br>
+				<button onClick = {this.Log}>Sign Up</button>
+				<br></br>
+				<button onClick = {this.handleCreateClick}>Create</button>
+				<br></br>
+				<button onClick = {this.handleLogoutClick}>Log out</button>
+                </div>
+				<div className = "Event">
+					</div>
+					
+			</div>
+		)
+	}
+}
 
 				// <button onClick={this.handleSignInClick}>Sign In</button>
 				// <br></br>
