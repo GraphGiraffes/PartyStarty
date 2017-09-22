@@ -36,12 +36,17 @@ class SignIn extends React.Component {
 	render(){
 		return (
 			<div>
-				<form>
-					<input onChange={this.handleUserInput} type="text" placeholder="Username" />
-					<input onChange={this.handlePasswordInput} type="text" placeholder="Password" />
-					<Link to="/" className="btn btn-secondary" onClick={this.handleSubmit}>Sign In</Link>
+				<div className="container">
+				<form onSubmit={this.handleSubmit}>
+					<div className = "form-input">
+					<input onChange={this.handleUserInput} type="text"name ="username" placeholder="Username" />
+					<input onChange={this.handlePasswordInput} type="password" name = "password" placeholder="Password" />
+					</div>
+					<input type="submit" value="Sigin" name="submit" value="Sign In"/>
 				</form>
-				<Link to="/signup" className="btn btn-secondary">Sign Up</Link>
+				<button>Sign Up</button>
+				<button>Forget Password?</button>
+				</div>
 			</div>
 		)
 	}
