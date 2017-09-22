@@ -6,30 +6,58 @@ import SignIn from './signin';
 import SignUp from './signup';
 import Create from './create';
 import Navbar from './navbar';
+import EventList from './eventList.js';
 var axios = require('axios');
 
 class Home extends React.Component {
 	constructor(props){
 		super(props)
 		this.state = {
-			// events: [],
+			events: []
 			// currentEvent: events[0]
 		}
+<<<<<<< HEAD
 		this.handleSignUpClick = this.handleSignUpClick.bind(this);
 		this.handleCreateClick = this.handleCreateClick.bind(this);
 		this.handleSignInClick = this.handleSignInClick.bind(this);
 		this.handleLogoutClick = this.handleLogoutClick.bind(this);
 		this.Log = this.Log.bind(this);
+=======
+		this.componentWillMount = this.componentWillMount.bind(this);
+	}
+	componentWillMount(){
+		axios.get('/getEvents')
+		.then(data => {
+			console.log('have data',data.data[0])
+			this.setState({
+				events: data.data
+			})
+			console.log(this.state.events)
+		})
+		.catch(error => {
+			console.log('ERROR retrieving events')
+		})
+	}
+	componentDidMount() {
+
+>>>>>>> backendRounting
 	}
 	render(){
 		return (
+			// !this.state.events? <div>Loading</div>:
 			<div>
 
+
 			<Navbar />
-			<h4 id="home">HOME SCREEN</h4>
+			
+     		<h4 id="home">HOME SCREEN</h4>
+			<div className= "EventList"> 
+				<EventList events={this.state.events}/>
+				</div>
 			</div>
 		)
 	}
+	
 }
 
 export default Home; 
