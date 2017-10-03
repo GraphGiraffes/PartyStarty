@@ -1,21 +1,33 @@
 var request = require('request');
 var crypto = require('crypto');
-var bcrypt = require('bcrypt-nodejs');
+var bcrypt = require('bcrypt');
 var key = require('dotenv').config();
 
-var db = require('../db.js');
-var Event = require('../model/event.js');
-var Movie = require('../model/moviequeue.js');
-var User = require('../model/user.js');
+var db = require('./db.js');
+var Event = require('./model/event.js');
+var Movie = require('./model/moviequeue.js');
+var User = require('./model/user.js');
+var util = require('./lib/utility');
 
 module.exports = {
   // User log in
   getUser: function(req, res, next) {
-    User.find().exec(function(err, users) {
-      if (users) {
-        res.status(200).send(users);
+    var username = req.body.username;
+    var password = req.body.password;
+
+    User.findOne({ username: username })
+    .exec(function(err, user) {
+      if (!user) {
+        console.log('User doesn\'t exisit');
+        res.send('error');
       } else {
-        res.end('User does not exist');
+        if (password === user.password) {
+          util.createSession(req, res, user);
+          console.log('session created', user);
+        } else {
+          console.log('user or password wrong');
+          res.send('error');
+        }
       }
     });
   },
@@ -27,52 +39,74 @@ module.exports = {
     User.findOne({username: username})
       .exec(function(err, user) {
         if(!user) {
-          bcrypt.genSalt(saltRounds, function(err, salt) {
-            bcrypt.has(password, salt, function(err, has) {
-              if (err) {
-                throw err;
-              } else {
-                User.create({
-                  username: username,
-                  password: hash
-                });
-              }
+          if (err) {
+            throw err;
+          } else {
+            User.create({
+              username: username,
+              password: password
+            }, function(err, user) {
+                util.createSession(req, res, user);
             });
-          });
+          }
         } else {
           console.log('Account already exists');
-          res.redirect('/signup');
+          res.send('error');
         }
       });
   },
-  // Retrieve existing events
-  getEvent: function(req, res, next) {
-    Event.find().exec(function(err, events) {
-      if (events) {
-        res.status(200).send(events);
+  // Retrieve existing events for particular user
+  getEvents: function(req, res, next) {
+    var username = req.session.user.username;
+
+    User.findOne({ username: username })
+    .exec(function(err, user) {
+      if (!user) {
+        res.send('User not found');
       } else {
-        res.end('Event does not exist');
+        res.status(200).send(user.events);
       }
     });
   },
-  // Create event
-  addEvent: function(req, res) {
-    var eventTitle = req.body.eventTitle;
-    var eventLocation = req.body.eventLocation;
-    var eventTime = req.body.eventTime;
-    var eventUsers = req.body.user;
 
+  // Retrieve event details
+  getEventDetail: function(req, res, next) {
+    var eventTitle = req.body.event;
     Event.findOne({eventTitle: eventTitle})
       .exec(function(err, event) {
-        if(!event) {
-          Event.create({
+        if (event) {
+          console.log('got the event', event);
+          res.status(200).send(event);
+        } else {
+          res.end('Event does not exist');
+        }
+      });
+  },
+  // Create event
+  addEvent: function(req, res) {
+    var eventTitle = req.body.title;
+    var eventLocation = req.body.location;
+    var eventDate = req.body.date;
+    var eventDesc = req.body.description;
+    var eventUser = req.session.user.username;
+
+    Event.create({
             eventTitle: eventTitle,
             eventLocation: eventLocation,
-            eventTime: eventTime,
-            eventUsers: [eventUsers]
-          })
+            eventTime: eventDate,
+            eventDesc: eventDesc,
+            eventUsers: [eventUser]
+          }, function(err, event) {
+            console.log(event);
+          });
+
+    User.findOne({username: eventUser})
+      .exec(function(err, user) {
+        if(user) {
+          user.events.push(eventTitle);
+          user.save();
         } else {
-          console.log('Event does not exisit');
+          console.log('user does not exisit');
         }
       });
   },
@@ -83,8 +117,9 @@ module.exports = {
 
     Event.findOne({eventTitle: eventTitle})
       .exec(function(err, event) {
-        if(!event) {
-          { "$push": { "eventUsers": eventUser } },
+        if(event) {
+          event.eventUsers.push(eventUser);
+          event.save();
         } else {
           console.log('Event does not exisit');
         }
@@ -102,63 +137,78 @@ module.exports = {
   },
   // Create new movie queue
   addMovie: function(req, res) {
-    var title = req.body.title.split(' ').join('+');;
-    // var year = req.body.year;
+    console.log(req.body);
+    var title = req.body.currentMovie.title;
     var event = req.body.event;
 
     Movie.findOne({title: title, event: event})
       .exec(function(err, movie) {
         if(movie) {
-          console.log('Movie found in queue');
+          console.log('Movie already in queue');
           res.status(200).send(movie);
         } else {
-          var movieRequest = 'https://api.themoviedb.org/3/search/movie?api_key=&query=' + process.env.MOVIEDB_KEY + title;
-          request(movieRequest, function(err, res, html) {
-          if (err) {
-            console.log(err);
-          } else {
-            var movieEntry = JSON.parse(html);
-            if(movieEntry.title) {
-              console.log('Movie found through API');
-              var newMovie = new Movie({
-                upvotes: 0,
-                downvotes: 0,
-                poster: movieEntry.poster_path, 
-                overview: movieEntry.overview,
-                releaseDate: movieEntry.release_date,
-                title: movieEntry.title,
-                popularity: movieEntry.popularity,
-                voteCount: movieEntry.vote_count,
-                voteAvg: movieEntry.vote_average,
-                event: event
-              }
+          console.log('Movie not in queue yet');
+          var movieId = req.body.currentMovie.id;
+          var moviePoster = req.body.currentMovie.poster;
+          var movieOverview = req.body.currentMovie.overview;
+          var movieVotes = req.body.currentMovie.votes;
 
-              });
-              newMovie.save(function(err, entry) {
-                if(err) {
-                  res.send(500,err);
-                }
-                else {
-                  console.log('Sending back to client', entry);
-                  res.json(entry);
-                } 
-              });
-            } else {
-              console.log('Nothing found');
-              res.send(200);              
-            }
+          Movie.create({
+                  title: title,
+                  id: movieId,
+                  poster: moviePoster,
+                  overview: movieOverview,
+                  votes: movieVotes,
+                  upvotes: 0,
+                  downvotes: 0,
+                  event: [event]
+                }, function(err, movie) {
+                  console.log('Movie added to queue');
+                  res.send(movie);
+                });
           }
         });
-        }
-      })
   },
   // upvote movie
-  upvote: function() {
-
+  upvote: function(req, res) {
+    var title = req.body.title;
+    // var event = req.body.event;
+    Movie.findOne({title: title}).exec(function(err, movie) {
+      if(movie) {
+        console.log('upvote movie found');
+        movie.upvotes++;
+        movie.save(function(err, entry) {
+          if(err) {
+            console.log(movie);
+            console.log(err);
+            res.send(500, err);
+          } else {
+            console.log('update successful');
+            res.send(201, movie.upvotes);
+          }
+        })
+      } else{
+        console.log('Movie not found, please vote for other movie');
+      }
+    });
   },
   // downvote movie
-  downvote: function() {
-
+  downvote: function (req, res) {
+    var title = req.body.title;
+    // var event = req.body.event;
+    Movie.findOne({title: title}).exec(function (err, movie) {
+      if(movie) {
+        movie.downvotes++;
+        movie.save(function(err, entry) {
+          if(err) {
+            res.send(500, err);
+          }
+        })
+      } else{
+        console.log('Movie not found, please vote for other movie');
+      }
+    });
   }
+
 
 };
